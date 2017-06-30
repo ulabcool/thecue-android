@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">The Cue</string>
+
+    <string name="loading">Loading</string>
+
+    <string name="tab_rokin">Rokin</string>
+    <string name="tab_herengracht">Herengracht</string>
+
+    <string name="sign_in">Sign in</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+
+    <string name="join">Join queue</string>
+
+</resources>
