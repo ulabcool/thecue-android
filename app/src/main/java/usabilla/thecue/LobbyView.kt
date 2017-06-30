@@ -2,6 +2,7 @@ package usabilla.thecue
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
@@ -14,16 +15,17 @@ import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.view_list.*
 
 
-class LobbyView : Fragment() {
+class LobbyView : Fragment(), View.OnClickListener {
 
-    private val SAVED_DATA = "saved list data"
     private val SAVED_DATA = "saved list data"
 
     private var players = ArrayList<QueuingPerson>()
     private var mDatabase = FirebaseDatabase.getInstance()
 
+    private var iAmInTheList = false
+
     companion object {
-        val ARG_OFFICE_RES = "office"
+        val ARG_OFFICE_RES = "office argument"
 
         fun getInstance(office: String): LobbyView {
             val fragment = LobbyView()
@@ -48,16 +50,7 @@ class LobbyView : Fragment() {
         list_players.layoutManager = LinearLayoutManager(context)
         list_players.adapter = PlayerAdapter(players, listener)
 
-        join_queue.setOnClickListener {
-            val user = FirebaseAuth.getInstance().currentUser
-            if (user != null) {
-                val key = mDatabase.getReference("queues").child(arguments.getString(ARG_OFFICE_RES)).push().key
-                val newUser = QueuingPerson(user.providerData[0].displayName!!, user.providerData[0].uid)
-                val map = HashMap<String, Any>()
-                map.put(key, newUser)
-                mDatabase.getReference("queues").child(arguments.getString(ARG_OFFICE_RES)).updateChildren(map)
-            }
-        }
+        join_queue.setOnClickListener(this)
         requestPlayers()
     }
 
@@ -68,13 +61,26 @@ class LobbyView : Fragment() {
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         players.clear()
+
+                        var myId = ""
+                        val user = FirebaseAuth.getInstance().currentUser
+                        if (user != null) {
+                            myId = user.providerData[0].uid
+                        }
+
+                        iAmInTheList = false
                         dataSnapshot.children.forEach {
                             val name = it.child("name").value as CharSequence
                             val userId = it.child("userId").value as CharSequence
+
+                            if (userId.equals(myId)) {
+                                iAmInTheList = true
+                            }
                             players.add(QueuingPerson(name, userId))
                         }
                         (activity as BaseActivity).hideProgressDialog()
                         (list_players.adapter as PlayerAdapter).updatePlayers(players)
+                        buttonVisual()
                     }
 
                     override fun onCancelled(error: DatabaseError) {
@@ -82,6 +88,39 @@ class LobbyView : Fragment() {
                         context.toast("Failed to read value")
                     }
                 })
+    }
+
+    override fun onClick(p0: View?) {
+        when (iAmInTheList) {
+            true -> {
+                val user = FirebaseAuth.getInstance().currentUser
+                if (user != null) {
+                    mDatabase.getReference("queues").child(arguments.getString(ARG_OFFICE_RES)).child(user.providerData[0].uid).removeValue()
+                }
+            }
+            false -> {
+                val user = FirebaseAuth.getInstance().currentUser
+                if (user != null) {
+                    val newUser = QueuingPerson(user.providerData[0].displayName!!, user.providerData[0].uid)
+                    val map = HashMap<String, Any>()
+                    map.put(user.providerData[0].uid, newUser)
+                    mDatabase.getReference("queues").child(arguments.getString(ARG_OFFICE_RES)).updateChildren(map)
+                }
+            }
+        }
+    }
+
+    private fun buttonVisual() {
+        when (iAmInTheList) {
+            true -> {
+                join_queue.setBackgroundColor(ContextCompat.getColor(context, R.color.colorAccent))
+                join_queue.text = getString(R.string.leave)
+            }
+            else -> {
+                join_queue.setBackgroundColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                join_queue.text = getString(R.string.join)
+            }
+        }
     }
 
 //    private fun showPic() {
