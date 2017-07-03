@@ -17,10 +17,13 @@ import usabilla.thecue.R
 import usabilla.thecue.model.QueuingPerson
 import usabilla.thecue.toast
 
+
 class LobbyView : BaseFragment(), View.OnClickListener {
 
     private val SAVED_DATA = "saved list data"
+
     private val DB_NAME = "queues"
+    private val FIREBASE_PROPERTY_TIMESTAMP = "timestamp"
 
     private val players = ArrayList<QueuingPerson>()
     private val mDatabase = FirebaseDatabase.getInstance()
@@ -61,6 +64,7 @@ class LobbyView : BaseFragment(), View.OnClickListener {
         showProgressDialog()
         mDatabase.getReference(DB_NAME)
                 .child(arguments.getString(ARG_OFFICE))
+                .orderByChild("createdAt")
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         players.clear()
@@ -75,11 +79,15 @@ class LobbyView : BaseFragment(), View.OnClickListener {
                         dataSnapshot.children.forEach {
                             val name = it.child("name").value as CharSequence
                             val userId = it.child("userId").value as CharSequence
+                            val timestamp = it.child("createdAt").value as Long
+
+                            val map = HashMap<String, String>()
+                            map.put(FIREBASE_PROPERTY_TIMESTAMP, timestamp.toString())
 
                             if (userId.equals(myId)) {
                                 iAmInTheList = true
                             }
-                            players.add(QueuingPerson(name, userId))
+                            players.add(QueuingPerson(name, userId, map))
                         }
                         hideProgressDialog()
                         (list_players.adapter as QueueAdapter).updatePlayers(players)
