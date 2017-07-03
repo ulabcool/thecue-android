@@ -1,4 +1,4 @@
-package usabilla.thecue
+package usabilla.thecue.section.signin
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,6 +11,10 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.android.synthetic.main.view_auth.*
+import usabilla.thecue.BaseActivity
+import usabilla.thecue.R
+import usabilla.thecue.section.lobby.LobbyActivity
+import usabilla.thecue.toast
 
 class AuthActivity : BaseActivity(), View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
 
